@@ -1,0 +1,69 @@
+---
+title: "clean Forest Trees"
+format: html
+editor: visual
+---
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(here)
+```
+
+Pull in data
+
+```{r}
+long_df <- read.csv(here("Data/vegan data/Forest_Trees_F21.csv"))
+```
+
+Common.name and Scientific.name should be factors
+
+```{r}
+long_df$Common.name <- as.factor(long_df$Common.name)
+long_df$Scientific.name <- as.factor(long_df$Scientific.name)
+```
+
+Now fix common name
+
+```{r}
+levels(long_df$Common.name)
+```
+
+Need to repair:
+
+-   "Black cherry", "black cherry"
+
+-   "musclewood", "muscle wood"
+
+-   "red maple", "Red maple"
+
+-   "white pine", "White pine"
+
+```{r}
+fix <- which(long_df$Common.name == "Black cherry")
+long_df$Common.name[fix] <- "black cherry"
+
+fix <- which(long_df$Common.name == "musclewood")
+long_df$Common.name[fix] <- "muscle wood"
+
+fix <- which(long_df$Common.name == "White pine")
+long_df$Common.name[fix] <- "white pine"
+
+fix <-which(long_df$Common.name == "Red maple")
+long_df$Common.name[fix] <- "red maple"
+
+long_df$Common.name <- factor(long_df$Common.name)
+levels(long_df$Common.name)
+```
+
+Now get rid of sci name column
+
+```{r}
+long_df <- long_df |> select(-c(Scientific.name, X_coord, Y_coord, Comments))
+```
+
+Now save
+
+```{r}
+write.csv(long_df, here("Data/vegan data/example_tree_data.csv"), row.names = F)
+```

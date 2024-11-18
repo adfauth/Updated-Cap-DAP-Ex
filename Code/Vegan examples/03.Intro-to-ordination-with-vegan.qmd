@@ -1,0 +1,99 @@
+---
+title: "Calculating indices with vegan"
+format: html
+editor: visual
+---
+
+## Calculating species richness and diversity indices with `vegan` package
+
+If you read through `01.Reshaping-data-frames.qmd` then you saw how we can reshape a data frame from long to wide to prepare it for use in the `vegan` package. The end product of that code was a file called `wide_df_example.csv`. We will use that file here.
+
+### Set up and read in the data
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(here)
+library(vegan) #load vegan package. Run `install.packages("vegan")` if you don't already have the package installed.
+```
+
+Load the data
+
+```{r}
+indices <- read.csv(here("Data/vegan data/wide_df_example.csv"))
+```
+
+### Calculate Species Richness
+
+We use the `vegan` function `specnumber` (short for "species number") to calculate species richness, as so.
+
+```{r}
+species_richness <- specnumber(indices[,3:23])#use indexing to grab only data from the columns of the dataframe that have information about trees. We use all rows but skip the first two columns which are forest and plot.
+species_richness
+```
+
+The result is a vector that gives the number of species at each of the 15 sites in this example. For example, the first number, 3, corresponds to the first row of `indices` where, if we look across the row, we can see that there are American beech, red pine, and white pine trees present for n = 3 species.
+
+### Calculate Simpson's index
+
+We use the `vegan` function `diversity` to calculate various diversity indices and specify which index we want to use as one of the arguments for the function, as so:
+
+```{r}
+simpsons_index <- diversity(indices[,3:23], index = "invsimpson")
+```
+
+This returns the inverse of the Simpson's index.
+
+Similarly, we can calculate the Shannon index:
+
+```{r}
+shannon_index <- diversity(indices[,3:23], index = "shannon")
+```
+
+And we get a vector of shannon indices for each row of the dataframe
+
+### Putting your results into an empty dataframe.
+
+If you want to do all of the above but store the results in a data frame as they are generated, rather than as individual vectors, you have two choices.
+
+1.  Create an empty data frame to store the results in before you start calculating different indices
+2.  Put the vectors together into a data frame after you calculate the indices.
+
+#### Method 1 - Create an empty data frame to store the results
+
+Let's create an empty data frame that we will call "Results" in which to store the different indices we calculate.
+
+We want it to have the same first two columns as our original data frame with the Forest and Plot number, so let's start with that:
+
+```{r}
+Results <- indices[,1:2] #grabs all rows and the first two columns 
+```
+
+Now we can just add out species richness, simpson's and shannon index to this dataframe as we create them. I will do it all in one block of code:
+
+```{r}
+Results$SR<-specnumber(indices[,3:23]) #creates new column in Results called "SR" to store the species richness data
+Results$simpson<-diversity(indices[,3:23], index = "invsimpson") #creates a new column in results called "simpson" to store simpson's index
+Results$shannon<-diversity(indices[,3:23], index = "shannon") #creates a new column in results called "shannon" to store shannon's index
+```
+
+#### Method 2 - Put the results together after you calculate them
+
+We created three vectors, `species_richness`, `simpsons_index` and `shannon_index` and we can bind them together into a data frame that we will call "Results2"
+
+```{r}
+Results2 <-as.data.frame(cbind(species_richness, simpsons_index, shannon_index))
+```
+
+If you want to add the first two columns that contain forest name and plot number you can add them
+
+```{r}
+Results2$Forest <- indices$Forest
+Results2$Plot <- indices$Plot
+```
+
+And, if it helps your sense of order, you can then use `relocate` to move the columns so that forest and plot come first:
+
+```{r}
+Results2 <- Results2 |> relocate(c(Forest, Plot), .before = species_richness)
+```

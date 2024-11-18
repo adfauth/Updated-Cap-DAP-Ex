@@ -1,0 +1,76 @@
+---
+title: "reshaping dataframes for vegan"
+format: html
+editor: visual
+---
+
+## Using vegan part 1 - reshaping data frames
+
+The `.qmd` files in this folder are to help students who are using the `vegan` package for their Capstone projects.
+
+`vegan` allows for:
+
+-   Calculating species richness as well as diversity indices such as Simpson's or Shannon index
+
+-   Performing multidimensional analysis via community ordination
+
+-   Other cool features!
+
+All of the functions in the `vegan` package require a **wide** rather than our typical **long** dataframe structure. The following code will show you how to reshape a dataframe from long to wide using the `pivot_wider` tidyverse function.
+
+### Set things up and pull in some example data
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(here)
+library(vegan)
+```
+
+Pull in a dataset formatted for vegan:
+
+```{r}
+vegan_df <- read.csv(here("Data/vegan data/vegan_df.csv"))
+View(vegan_df)
+
+```
+
+The `vegan_df` data frame is formatted correctly for the `vegan` package. Notice that there is one row for each site and a column for each species. Cell values can be many different things: raw abundance (counts of numbers of individuals) is most common, but the values might be diversity indices or presence/absence, etc.
+
+Now let's look at a dataset that is in our long format (and is likely most similar to your own data):
+
+```{r}
+long_df <- read.csv(here("Data/vegan data/example_tree_data.csv"))
+```
+
+Notice that in this dataset, each row is for a single tree. In order to reformat these data for vegan, we first need to do a `group_by` and `summarise` to get counts of the number of trees of each species at each site.
+
+```{r}
+long_summary <- long_df |> group_by(Forest, Plot, Common.name) |> summarise(
+  num_trees = length(Common.name)
+)
+```
+
+## Go from long to wide format for vegan
+
+Now we need to take our long_summary dataset and cast it from long to wide to reshape it for use in the `vegan` package.
+
+```{r}
+wide_df <- long_summary |> pivot_wider(names_from = Common.name, values_from = num_trees)
+```
+
+Great! We're almost there! Now we just need to replace all the `NA` values with `0` since there were no trees of that species present at those locations.
+
+```{r}
+wide_df <- wide_df |> mutate(
+  across(where(is.numeric), ~replace_na(.,0)))
+#scans across all numeric colunms and runs replace_na function, putting 0 in place of NA
+```
+
+Your data are now in a format for vegan! Let's save them.
+
+```{r}
+write.csv(wide_df, here("Data/vegan data/wide_df_example.csv"), row.names = F)
+```
+
+See the next files in this folder for more instructions.
