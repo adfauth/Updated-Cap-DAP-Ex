@@ -1,0 +1,74 @@
+---
+title: "Calculating indices with vegan"
+format: html
+editor: visual
+---
+
+## Conducting an ordination with the `vegan` package
+
+### Set things up
+
+Let's set up our workspace. Note a couple of special packages.
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(vegan)
+library(ggvegan)
+library(ggpubr)
+library(ggrepellibrary(here)
+#ggvegan is used for plotting ordination results
+```
+
+### Conduct a Bray-Curtis NMDS ordination
+
+Ordination is a multivariate "data reduction" technique not unlike a principal components analysis ("PCA") if you've heard of that.
+
+We use ordination in community ecology to try and decide which communities might be more similar to one another based on some attribute - often their species composition.
+
+#### Step 1. Pull in and examine the wide data frame example that we created in `01.Reshaping-data-frames.qmd`
+
+```{r}
+trees_wide <- read.csv(here("Data/vegan data/wide_df_example.csv"))
+View(trees_wide)
+```
+
+Notice that the only data in this dataframe are the two first columns identifying forest and site and then additional columns for each species. In this case, the values in the cells for tree species represent number of trees, but the values could be anything - importance values for each species, tree density, mean dbh of trees, etc. Typically, however, the cells contain either presence/absence or abunance values. Note that you cannot have NA values in the species columns.
+
+#### Step 2. Run the NMDS.
+
+Actually doing the ordination is simply a matter of running code. Note that we need to pass just the species columns of our data frame and not the forest and plot columns when we create the model.
+
+```{r}
+TreesOrd <- metaMDS(trees_wide[,3:23], distance = "bray", k = 2)
+```
+
+#### Step 3. Interpret the results
+
+Notice that the TreesOrd object in your Environment window is a list of 36 different items! First, take a look at the "stress" associated with the model. Stress is a measure of how well our two-dimensional representation captures the information in our 21-dimensional space (the 21 species). In general, stress values need to be less that 0.2 to be acceptable.
+
+Let's look at the stress associated with this ordination:
+
+```{r}
+TreesOrd$stress
+```
+
+We can also look at something called the stress plot
+
+```{r}
+stressplot(TreesOrd)
+```
+
+What do you think this is telling us?
+
+#### Step 4. Plot the results for further interpretation.
+
+The first step is to use a function called `fortify` to rearrange the output into a long-format dataframe familiar to ggplot2. Then we can make a basic plot. Then we will spruce up our basic plot.
+
+Basic plot
+
+```{r}
+gof <- goodness(TreesOrd) #goodness of fit
+plot(TreesOrd, type = "t", main = "goodness of fit")
+points(TreesOrd, display = "sites", cex=gof*100)
+```

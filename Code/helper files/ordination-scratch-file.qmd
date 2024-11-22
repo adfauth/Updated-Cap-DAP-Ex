@@ -1,43 +1,22 @@
 ---
-title: "Calculating indices with vegan"
+title: "ordination-data-messing-around"
 format: html
 editor: visual
 ---
 
-## Introduction to community ordination
+## 
 
-### Set things up
-
-Let's set up our workspace. Note a couple of special packages.
-
-```{r}
-rm(list = ls())
-library(tidyverse)
-library(vegan)
-library(gg3D)
-#gg3D is installed from a git hub website. You need to do two steps
-#First, run install.packages("devtools") in the console.
-#Once devtools in installed, type
-#devtools::install_github("AckerDWM/gg3D")
-```
-
-### What is ordination?
-
-Ordination is a multivariate "data reduction" technique not unlike a principal components analysis ("PCA") if you've heard of that.
-
-We use ordination in community ecology to try and decide which communities might be more similar to one another based on some attribute - often their species composition.
-
-Let's make a simple comparison of four forest communities based on one variable: the number of sugar maples present in each forest.
+Let's make a simple comparison of two communities
 
 ```{r}
 site <- c("A", "B", "C", "D")
 sugar_maples <- c(4, 1, 7, 5)
 
-trees <- as.data.frame(cbind(site, sugar_maples))#put together into data frame
+trees <- as.data.frame(cbind(site, sugar_maples))
 trees$sugar_maples <- as.numeric(trees$sugar_maples)
 ```
 
-If we tried to look at how similar (or different) these communities at sites A - D are from one another, we could plot them on a single axis - number of sugar maples, and see where each community falls.
+Can we plot on one axis?
 
 ```{r}
 library(tidyverse)
@@ -51,12 +30,16 @@ ggplot(trees, aes(sugar_maples, 0, color = site))+
   scale_y_continuous(limits = c(-0.2, 0.2))+
   labs(x = "Number of sugar maple trees")+
   theme_bw()
-  
+  #theme(panel.background = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y = element_blank()
+        )
+
+
 ```
 
-According to this figure, we might say that A and D are most similar to each other (closest together) and that B and C are least similar (farthest apart).
-
-What if we had information about a second species? Let's add the number of beech trees at each site.
+Now what if we had a second dimension? How about number of beech trees?
 
 ```{r}
 trees$beech_trees <- c(5,3, 2, 4)
@@ -78,21 +61,20 @@ ggplot(trees, aes(sugar_maples, beech_trees, color = site))+
 
 ```
 
-Now we are able to compare these 4 communities in 2-dimensional space.
+We can see when we look with two dimensions (number of species 1, number of species 2) that sites A and D are closer to one another than either is to either of the other 2 sites.
 
-We can see that sites A and D are closer to one another than either is to either of the other 2 sites.
-
-What if we have a 3rd species? Let's add yellow birch trees.
+What if we have a 3rd species?
 
 ```{r}
 trees$yellow_birch <- c(2, 5, 1, 2)
 ```
 
-To plot in 3D we need the `gg3d` package (loaded at the top of this file)
+To plot in 3D we need `gg3d`
 
 So, for each species that we add, we are adding an additional dimension to our analysis. This is helpful for differentiating among the sites, but we can't really plot more than 3 dimensions.
 
 ```{r}
+library(gg3D)
 ggplot(trees, aes(x = sugar_maples, y = beech_trees, z = yellow_birch, color = site))+
   theme_void()+
   axes_3D()+
@@ -102,7 +84,3 @@ ggplot(trees, aes(x = sugar_maples, y = beech_trees, z = yellow_birch, color = s
 We can see that as we add dimensions, we start to see how the different sites cluster together or repel one another, but we have a problem: we can't really plot in \> 3 dimensions. We might have many more than 3 species, though, and we'd want data from those species.
 
 The solution to this problem is ordination, in which, rather than plotting the actual values (number of trees) we build a distance matrix in which, depending on how we measure the distance, we get a single difference value for each pair of species.
-
-A very common method for creating those distance matrices is to use something called "**N**on-metric **M**ulti**d**imensional **S**calling" (aka NMDS) and use the "Bray-Curtis" method to create the distance matrix.
-
-We'll look at how to do this all in the next script.
