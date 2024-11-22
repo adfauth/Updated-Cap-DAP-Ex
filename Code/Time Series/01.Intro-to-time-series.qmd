@@ -1,0 +1,58 @@
+---
+title: "Intro to time series"
+format: html
+editor: visual
+---
+
+## Introduction to time series
+
+There are many cases in biology where data have a time or temporal component. For example, we might measure growth over some period of months, or measure how atmospheric CO~2~ increases over time. Many people also use time series in the analysis of financial markets, where they are interested in patterns of stock price changes over time and in whether they can predict what those prices are likely to do in the future.
+
+Let's look at atmospheric CO~2~ levels as an example.
+
+### Set things up and pull in an example data set
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(here)
+```
+
+Now grab the sample data
+
+```{r}
+co2 <-read.csv(here("Data/time-series-data/mauna-loa-carbon-dioxide.csv"))
+View(co2)
+```
+
+Let's make the date into a date format for plotting
+
+```{r}
+co2$decimal.date <- date_decimal(co2$decimal.date)
+```
+
+Now plot
+
+```{r}
+ggplot(co2, aes(decimal.date, carbon.dioxide.ppm))+
+  geom_point()+
+  geom_line()
+```
+
+There we go! It looks like we are seeing a couple of things when we look at these data.
+
+-   There is an overall upward trend in the amount of atmospheric co2
+
+-   There appears to be seasonal variation in the data as well. For example, of we zoom in on the year 2024, we see the following
+
+```{r}
+ggplot(data = filter(co2, Year == 2024), aes(decimal.date, carbon.dioxide.ppm))+
+  geom_point()+
+  geom_line()
+```
+
+In many ways, this seems like a linear regression, in that we have a continuous response variable and a continuous predictor variable. However, we also know that the measurements from day to day have some dependence on one another, which violates a basic assumption of independence of observations. We can also pretty clearly see from our plots that the data do not fit a nice linear model.
+
+The order in which the observations occurs matters in order to see the trend - they depend on time. If you changed the order of the data, the signal, that is the information contained in the data, would change.
+
+Like the other statistics we have been doing, our basic goal with time series is to determine a model that does a fairly good job at describing the pattern or patterns we observe in our temporal data.
