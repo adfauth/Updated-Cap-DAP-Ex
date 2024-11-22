@@ -1,0 +1,158 @@
+---
+title: "Calculating indices with vegan"
+format: html
+editor: visual
+---
+
+## Visualizing ordination results with the `ggvegan` package
+
+### Set things up
+
+Let's set up our workspace. Note a couple of special packages.
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(vegan)
+library(ggvegan)
+library(ggpubr)
+library(ggrepel)
+library(here)
+#ggvegan is used for plotting ordination results
+
+```
+
+If at any point you get an error message that ggvegan doesn't work with this version of R, then you need to install it in a different way. Use the following code chunk:
+
+```{r}
+#Install a package with functions to install other packages from github - uncomment the #next line to run it.
+
+#install.packages("devtools") 
+
+#now use devtools to install the most up to date version of ggvegan. Uncomment to run:
+#devtools::install_github("gavinsimpson/ggvegan") 
+
+#you may also have to uncomment and then run:
+#install.packages("ggpubr") 
+#install.packages("ggrepel")
+
+```
+
+### Conduct a Bray-Curtis NMDS ordination
+The following pulls in the data and recreates the same ordination that we made in `04.Conducting-an-ordination-with-vegan`
+
+```{r}
+trees_wide <- read.csv(here("Data/vegan data/wide_df_example.csv")) #pull in the data
+
+TreesOrd <- metaMDS(trees_wide[,3:23], distance = "bray", k = 2) #run the ordination
+```
+See `04.Conducting-an-ordination-with-vegan.qmd` for more on how to understand the output.
+
+### Make some nice(r) plots
+
+#### Basic plots with base R
+
+```{r}
+ordiplot(TreesOrd, choices = c(1, 2)) #choices tells it which axes to plot
+plot(TreesOrd, type = "t") #type = t tells it to plot text instead of symbols
+```
+
+#### Make nicer plots with `ggvegan` and `ggplot2`
+To make a nicer plot, we first use a `ggplot2` function called `fortify` to rearrange the output into a long-format dataframe familiar to ggplot2 and then plot.
+
+```{r}
+#now put results into a dataframe that ggplot2 can use
+PlotData <- fortify(TreesOrd) 
+View(PlotData)
+```
+
+Notice when you view PlotData that it has a strange structure. It is like two dataframes stacked on top of one another, the first 15 rows indicating the data for the separate sites, with a label column identifying the site number, and the second half of the data representing species, with species names instead of site numbers. We can monkey around with the values in the `label` column if we really want to get detailed on our final plots.
+
+But first, let's make a basic ggplot:
+
+
+```{r}
+ggplot(PlotData, aes(NMDS1, NMDS2, group = score))+
+  geom_text(aes(label = label, color = score))+
+  scale_color_manual(values = c(sites = "brown", species = "green"))+
+  geom_point(aes(color = score, shape = score), size = 0.1)+
+  scale_color_manual(values = c(sites = "red", species = "black"))+
+  theme_bw()
+               
+```
+
+Now let's really customize it. If you spend a lot of time digging into this code you will see what it does. I have provided some commenting.
+
+```{r}
+ggplot()+
+   geom_point(data = subset(PlotData, score =="sites"), 
+              aes(label = label, x = NMDS1, y = NMDS2),
+              color = "red",
+              alpha = 0.5) +
+   geom_segment(data=subset(PlotData, score == "species"),
+                 mapping = aes(x = 0, y = 0, xend = NMDS1, yend=NMDS2),
+                 arrow = arrow(length = unit(0.015, "npc"),
+               type = "closed"),
+                 color = "darkgray",
+                 size = 0.8)+
+   geom_text(data = subset(PlotData, score == "species"),
+             mapping = aes(label = label, x = NMDS1*1.1, y=NMDS2*1.1 ), size = 8/.pt)+ #plots species names on plot
+  geom_text(data = subset(PlotData, score == "sites"),
+             mapping = aes(label = label, x = NMDS1*1.1, y = NMDS2), size = 10/.pt, color = "red")+ #plots
+   geom_abline(intercept = 0, slope = 0, linetype = "dashed", linewidth = 0.8, color = "gray")+
+   geom_vline(aes(xintercept = 0), linetype = "dashed", linewidth = 0.8, color = "gray")+
+   theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(color = "black")
+   )
+   
+```
+Whoa! Now each dot represents a site, and the arrows help to show the distances and directions that the different species pull the sites away from one another.
+
+I can do one more thing, which is to change site number to name by adjusting PlotData. I will do it below, creating PlotData2 and using that to make a very similar plot.
+
+```{r}
+PlotData2 <- PlotData
+site_names <- c("DG-1", "DG-2", "DG-3", "Don-1", "Don-2", "Don-3", "KT-1", "KT-2", "KT-3", "P-1", "P-2", "P-3", "SH-1", "SH-2", "SH-3")
+
+#variable site_names has shortened combinations of the first two columns of trees_wide.
+
+#now replace the first 15 rows of PlotData2$label with site_names
+PlotData2$label[1:15] <- site_names
+
+```
+Now redo the plot:
+
+```{r}
+ggplot()+
+   geom_point(data = subset(PlotData2, score =="sites"), 
+              aes(label = label, x = NMDS1, y = NMDS2),
+              color = "red",
+              alpha = 0.5) +
+   geom_segment(data=subset(PlotData2, score == "species"),
+                 mapping = aes(x = 0, y = 0, xend = NMDS1, yend=NMDS2),
+                 arrow = arrow(length = unit(0.015, "npc"),
+               type = "closed"),
+                 color = "darkgray",
+                 size = 0.8)+
+   geom_text(data = subset(PlotData2, score == "species"),
+             mapping = aes(label = label, x = NMDS1*1.1, y=NMDS2*1.1 ), size = 8/.pt)+ #plots species names on plot
+  geom_text(data = subset(PlotData2, score == "sites"),
+             mapping = aes(label = label, x = NMDS1*1.1, y = NMDS2), size = 10/.pt, color = "red")+ #plots
+   geom_abline(intercept = 0, slope = 0, linetype = "dashed", linewidth = 0.8, color = "gray")+
+   geom_vline(aes(xintercept = 0), linetype = "dashed", linewidth = 0.8, color = "gray")+
+   theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      axis.line = element_line(color = "black")
+   )
+   
+```
+
+Now we can see that the 3 Degrasse plots (DG-1 through DG-3) all appear to cluster together, as do the three South Hammond plots (SH-1 through SH-3) but there is more overlap among sites from the other 3 locations (Kip Tract, Donnerville and Peavine).
+
+Cool, hunh?
+

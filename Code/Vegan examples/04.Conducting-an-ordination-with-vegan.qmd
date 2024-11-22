@@ -16,7 +16,8 @@ library(tidyverse)
 library(vegan)
 library(ggvegan)
 library(ggpubr)
-library(ggrepellibrary(here)
+library(ggrepel)
+library(here)
 #ggvegan is used for plotting ordination results
 ```
 
@@ -40,7 +41,7 @@ Notice that the only data in this dataframe are the two first columns identifyin
 Actually doing the ordination is simply a matter of running code. Note that we need to pass just the species columns of our data frame and not the forest and plot columns when we create the model.
 
 ```{r}
-TreesOrd <- metaMDS(trees_wide[,3:23], distance = "bray", k = 2)
+TreesOrd <- metaMDS(trees_wide[,3:23], distance = "bray", k = 2) #bray tells us how to create a distance matrix and k tells the number of dimensions we would like as a result. 
 ```
 
 #### Step 3. Interpret the results
@@ -63,12 +64,11 @@ What do you think this is telling us?
 
 #### Step 4. Plot the results for further interpretation.
 
-The first step is to use a function called `fortify` to rearrange the output into a long-format dataframe familiar to ggplot2. Then we can make a basic plot. Then we will spruce up our basic plot.
+We will make a very basic plot here. Please also consult `05.Visualizing-ordination-output.qmd` to make fancier plots.
 
 Basic plot
 
 ```{r}
-gof <- goodness(TreesOrd) #goodness of fit
-plot(TreesOrd, type = "t", main = "goodness of fit")
-points(TreesOrd, display = "sites", cex=gof*100)
+plot1 <- ordiplot(TreesOrd, choices = c(1, 2)) #choices tells it which axes to plot
+plot(TreesOrd, type = "t") #type = t tells it to plot text instead of symbols
 ```
