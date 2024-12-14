@@ -14,7 +14,7 @@ Let's set up our workspace. Note a couple of special packages.
 rm(list = ls())
 library(tidyverse)
 library(vegan)
-library(gg3D)
+#library(gg3D)
 #gg3D is installed from a git hub website. You need to do two steps
 #First, run install.packages("devtools") in the console.
 #Once devtools in installed, type

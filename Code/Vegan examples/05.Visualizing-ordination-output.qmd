@@ -39,6 +39,7 @@ If at any point you get an error message that ggvegan doesn't work with this ver
 ```
 
 ### Conduct a Bray-Curtis NMDS ordination
+
 The following pulls in the data and recreates the same ordination that we made in `04.Conducting-an-ordination-with-vegan`
 
 ```{r}
@@ -46,6 +47,7 @@ trees_wide <- read.csv(here("Data/vegan data/wide_df_example.csv")) #pull in the
 
 TreesOrd <- metaMDS(trees_wide[,3:23], distance = "bray", k = 2) #run the ordination
 ```
+
 See `04.Conducting-an-ordination-with-vegan.qmd` for more on how to understand the output.
 
 ### Make some nice(r) plots
@@ -58,6 +60,7 @@ plot(TreesOrd, type = "t") #type = t tells it to plot text instead of symbols
 ```
 
 #### Make nicer plots with `ggvegan` and `ggplot2`
+
 To make a nicer plot, we first use a `ggplot2` function called `fortify` to rearrange the output into a long-format dataframe familiar to ggplot2 and then plot.
 
 ```{r}
@@ -69,7 +72,6 @@ View(PlotData)
 Notice when you view PlotData that it has a strange structure. It is like two dataframes stacked on top of one another, the first 15 rows indicating the data for the separate sites, with a label column identifying the site number, and the second half of the data representing species, with species names instead of site numbers. We can monkey around with the values in the `label` column if we really want to get detailed on our final plots.
 
 But first, let's make a basic ggplot:
-
 
 ```{r}
 ggplot(PlotData, aes(NMDS1, NMDS2, group = score))+
@@ -109,6 +111,7 @@ ggplot()+
    )
    
 ```
+
 Whoa! Now each dot represents a site, and the arrows help to show the distances and directions that the different species pull the sites away from one another.
 
 I can do one more thing, which is to change site number to name by adjusting PlotData. I will do it below, creating PlotData2 and using that to make a very similar plot.
@@ -123,6 +126,7 @@ site_names <- c("DG-1", "DG-2", "DG-3", "Don-1", "Don-2", "Don-3", "KT-1", "KT-2
 PlotData2$label[1:15] <- site_names
 
 ```
+
 Now redo the plot:
 
 ```{r}
@@ -155,4 +159,3 @@ ggplot()+
 Now we can see that the 3 Degrasse plots (DG-1 through DG-3) all appear to cluster together, as do the three South Hammond plots (SH-1 through SH-3) but there is more overlap among sites from the other 3 locations (Kip Tract, Donnerville and Peavine).
 
 Cool, hunh?
-
